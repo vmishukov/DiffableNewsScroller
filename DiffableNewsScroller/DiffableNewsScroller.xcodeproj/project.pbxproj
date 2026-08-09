@@ -14,6 +14,7 @@
 		91C6C1EF3026F8190027942F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 91C6C1E63026F8190027942F /* LaunchScreen.storyboard */; };
 		91C6C1F53026FD1F0027942F /* NewsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C6C1F43026FD1F0027942F /* NewsViewModel.swift */; };
 		91C6C1F73026FD340027942F /* NewsCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C6C1F63026FD340027942F /* NewsCollectionCell.swift */; };
+		91C6C1F93028751C0027942F /* NewsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C6C1F83028751C0027942F /* NewsModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		91C6C1E83026F8190027942F /* NewsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsViewController.swift; sourceTree = "<group>"; };
 		91C6C1F43026FD1F0027942F /* NewsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsViewModel.swift; sourceTree = "<group>"; };
 		91C6C1F63026FD340027942F /* NewsCollectionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsCollectionCell.swift; sourceTree = "<group>"; };
+		91C6C1F83028751C0027942F /* NewsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +82,7 @@
 		91C6C1F13026FC490027942F /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				91C6C1F83028751C0027942F /* NewsModel.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -175,6 +178,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91C6C1F93028751C0027942F /* NewsModel.swift in Sources */,
 				91C6C1EA3026F8190027942F /* AppDelegate.swift in Sources */,
 				91C6C1EB3026F8190027942F /* SceneDelegate.swift in Sources */,
 				91C6C1EC3026F8190027942F /* NewsViewController.swift in Sources */,

@@ -6,8 +6,9 @@
 //
 
 import UIKit
+import Combine
 
-class NewsViewController: UIViewController {
+final class NewsViewController: UIViewController {
     
     private lazy var newsCollectionView: UICollectionView = {
         
@@ -21,11 +22,15 @@ class NewsViewController: UIViewController {
         return collection
     }()
     
+    private var cancellables = Set<AnyCancellable>()
+    
+    private let viewModel = NewsViewModel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
         setupConstraints()
-        view.backgroundColor = .systemBackground
+        bindViewModel()
     }
 }
 
@@ -35,6 +40,7 @@ private extension NewsViewController {
     func setupView() {
         view.addSubview(newsCollectionView)
         navigationItem.title = "News Scroller"
+        view.backgroundColor = .systemBackground
     }
     
     func setupConstraints() {
@@ -50,7 +56,7 @@ private extension NewsViewController {
         let layout = UICollectionViewCompositionalLayout {
             (sectionIndex: Int, layoutEnvironment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
             let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                  heightDimension: .fractionalHeight(1.0))
+                                                  heightDimension: .estimated(100))
             let itemInsets = NSDirectionalEdgeInsets(top: 10,
                                                      leading: 10,
                                                      bottom: 10,
@@ -58,8 +64,9 @@ private extension NewsViewController {
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
             item.contentInsets = itemInsets
             
-            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.85),
-                                                   heightDimension: .fractionalHeight(0.4))
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                                   heightDimension: .fractionalHeight(1.0))
+            
             let containerGroup = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
             
             let section = NSCollectionLayoutSection(group: containerGroup)
@@ -69,13 +76,36 @@ private extension NewsViewController {
         return layout
     }
     
+    private func bindViewModel() {
+        viewModel.$news
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.newsCollectionView.reloadData()
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$errorMessage
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] errorMessage in
+                self?.showError(errorMessage)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func showError(_ message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default))
+        present(alert, animated: true)
+    }
+    
 }
 
 // MARK: - UICollectionViewDataSource
 extension NewsViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        3
+        viewModel.news.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
