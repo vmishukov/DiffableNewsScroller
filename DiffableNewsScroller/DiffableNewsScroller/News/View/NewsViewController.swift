@@ -6,29 +6,33 @@
 //
 
 import UIKit
+import Combine
 
-class NewsViewController: UIViewController {
+final class NewsViewController: UIViewController {
     
     private lazy var newsCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical
         
-        let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        let collection = UICollectionView(frame: .zero, collectionViewLayout: createCollectionLayout())
         collection.translatesAutoresizingMaskIntoConstraints = false
         collection.register(NewsCollectionCell.self,
                             forCellWithReuseIdentifier: NewsCollectionCell.reuseIdentifier)
         collection.translatesAutoresizingMaskIntoConstraints = false
-        collection.backgroundColor = .gray
-        collection.dataSource = self
         collection.delegate = self
         return collection
     }()
     
+    private var dataSource: NewsCollectionDataSource?
+    
+    private var cancellables = Set<AnyCancellable>()
+    
+    private let viewModel = NewsViewModel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupCollectionDataSource()
         setupView()
         setupConstraints()
-        view.backgroundColor = .systemBackground
+        bindViewModel()
     }
 }
 
@@ -38,6 +42,7 @@ private extension NewsViewController {
     func setupView() {
         view.addSubview(newsCollectionView)
         navigationItem.title = "News Scroller"
+        view.backgroundColor = .systemBackground
     }
     
     func setupConstraints() {
@@ -49,46 +54,70 @@ private extension NewsViewController {
         ])
     }
     
-}
-
-// MARK: - UICollectionViewDataSource
-extension NewsViewController: UICollectionViewDataSource {
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        3
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NewsCollectionCell.reuseIdentifier, for: indexPath)
-        
-        guard let newsCell = cell as? NewsCollectionCell else {
-            return cell
+    func createCollectionLayout() -> UICollectionViewLayout {
+        let layout = UICollectionViewCompositionalLayout {
+            (sectionIndex: Int, layoutEnvironment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
+            let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                                  heightDimension: .estimated(100))
+            let itemInsets = NSDirectionalEdgeInsets(top: 10,
+                                                     leading: 10,
+                                                     bottom: 10,
+                                                     trailing: 10)
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+            item.contentInsets = itemInsets
+            
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                                   heightDimension: .fractionalHeight(1.0))
+            
+            let containerGroup = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+            
+            let section = NSCollectionLayoutSection(group: containerGroup)
+            
+            return section
         }
-        return newsCell
+        return layout
     }
     
+    func bindViewModel() {
+        viewModel.$newsItems
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateNewsCollection()
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$errorMessage
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] errorMessage in
+                self?.showError(errorMessage)
+            }
+            .store(in: &cancellables)
+    }
+    
+    func setupCollectionDataSource() {
+        dataSource = NewsCollectionDataSource(collectionView: newsCollectionView,
+                                              cellProvider: { collectionView, indexPath, item in
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NewsCollectionCell.reuseIdentifier, for: indexPath)
+            guard let newsCell = cell as? NewsCollectionCell else { return cell }
+            newsCell.configureCell(with: item)
+            return newsCell
+        })
+        newsCollectionView.dataSource = dataSource
+    }
+    
+    func showError(_ message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default))
+        present(alert, animated: true)
+    }
+    
+    func updateNewsCollection() {
+        dataSource?.applySnapshot(items: viewModel.newsItems)
+    }
 }
 
 // MARK: - UICollectionViewDelegate
 extension NewsViewController: UICollectionViewDelegate {
     
-}
-
-// MARK: - UICollectionViewDelegateFlowLayout
-extension NewsViewController: UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let availableWidth = collectionView.frame.width - 9
-        let cellWidth =  availableWidth
-        return CGSize(width: cellWidth,
-                      height: 160)
-    }
-    
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        1
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 8
-    }
 }

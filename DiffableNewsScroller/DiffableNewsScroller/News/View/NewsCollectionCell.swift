@@ -15,14 +15,25 @@ final class NewsCollectionCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "Title label"
+        label.font = .systemFont(ofSize: 14, weight: .medium)
         return label
     }()
     
-    private lazy var textLabel: UILabel = {
+    private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "It’s important for SEOs and marketers to know that, with the recent update to Google News, Google has ended support for Editors’ Picks feeds and the standout meta tag."
         label.numberOfLines = 0
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        return label
+    }()
+    
+    private lazy var categoryLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "Business"
+        label.font = .systemFont(ofSize: 13, weight: .regular)
+        label.backgroundColor = .systemBlue
         return label
     }()
     
@@ -30,6 +41,7 @@ final class NewsCollectionCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "7 hours ago"
+        label.font = .systemFont(ofSize: 12, weight: .light)
         return label
     }()
     
@@ -53,12 +65,26 @@ final class NewsCollectionCell: UICollectionViewCell {
     }
 }
 
+// MARK: - Public Methods
+extension NewsCollectionCell {
+    
+    func configureCell(with item: NewsItem) {
+        titleLabel.text = item.title
+        descriptionLabel.text = item.description
+        categoryLabel.text = item.categoryType
+        imageView.image = item.image
+        dateInfoLabel.text = item.dateInfo
+    }
+    
+}
+
 // MARK: - Private Extension
 private extension NewsCollectionCell {
     
     func setupCell() {
         contentView.addSubview(titleLabel)
-        contentView.addSubview(textLabel)
+        contentView.addSubview(categoryLabel)
+        contentView.addSubview(descriptionLabel)
         contentView.addSubview(dateInfoLabel)
         contentView.addSubview(imageView)
     }
@@ -69,11 +95,15 @@ private extension NewsCollectionCell {
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
             
-            textLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-            textLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            textLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            categoryLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+            categoryLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            categoryLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
             
-            dateInfoLabel.topAnchor.constraint(equalTo: textLabel.bottomAnchor),
+            descriptionLabel.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor),
+            descriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            descriptionLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            
+            dateInfoLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor),
             dateInfoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             dateInfoLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             dateInfoLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
