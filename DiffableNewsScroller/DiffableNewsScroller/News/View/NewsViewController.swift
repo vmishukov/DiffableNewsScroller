@@ -10,15 +10,12 @@ import UIKit
 class NewsViewController: UIViewController {
     
     private lazy var newsCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical
         
-        let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        let collection = UICollectionView(frame: .zero, collectionViewLayout: createCollectionLayout())
         collection.translatesAutoresizingMaskIntoConstraints = false
         collection.register(NewsCollectionCell.self,
                             forCellWithReuseIdentifier: NewsCollectionCell.reuseIdentifier)
         collection.translatesAutoresizingMaskIntoConstraints = false
-        collection.backgroundColor = .gray
         collection.dataSource = self
         collection.delegate = self
         return collection
@@ -49,6 +46,29 @@ private extension NewsViewController {
         ])
     }
     
+    func createCollectionLayout() -> UICollectionViewLayout {
+        let layout = UICollectionViewCompositionalLayout {
+            (sectionIndex: Int, layoutEnvironment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
+            let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                                  heightDimension: .fractionalHeight(1.0))
+            let itemInsets = NSDirectionalEdgeInsets(top: 10,
+                                                     leading: 10,
+                                                     bottom: 10,
+                                                     trailing: 10)
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+            item.contentInsets = itemInsets
+            
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.85),
+                                                   heightDimension: .fractionalHeight(0.4))
+            let containerGroup = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+            
+            let section = NSCollectionLayoutSection(group: containerGroup)
+            
+            return section
+        }
+        return layout
+    }
+    
 }
 
 // MARK: - UICollectionViewDataSource
@@ -72,23 +92,4 @@ extension NewsViewController: UICollectionViewDataSource {
 // MARK: - UICollectionViewDelegate
 extension NewsViewController: UICollectionViewDelegate {
     
-}
-
-// MARK: - UICollectionViewDelegateFlowLayout
-extension NewsViewController: UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let availableWidth = collectionView.frame.width - 9
-        let cellWidth =  availableWidth
-        return CGSize(width: cellWidth,
-                      height: 160)
-    }
-    
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        1
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 8
-    }
 }
