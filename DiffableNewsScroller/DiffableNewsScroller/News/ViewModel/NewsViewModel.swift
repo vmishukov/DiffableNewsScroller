@@ -10,9 +10,10 @@ import Combine
 
 final class NewsViewModel {
     
-    @Published private(set) var news: [NewsModel] = []
+    @Published private(set) var newsItems: [NewsItem] = []
     @Published private(set) var errorMessage: String? = nil
     
+    private var fetchedNews: [NewsModel]?
     init() {
         fetchNews()
     }
@@ -22,8 +23,19 @@ final class NewsViewModel {
 private extension NewsViewModel {
     
     func fetchNews() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
-            self.news = NewsModel.makeMockData()
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) { [weak self] in
+            self?.fetchedNews = NewsModel.makeMockData()
+            self?.updateNewsItems()
+        }
+    }
+    
+    func updateNewsItems() {
+        guard let fetchedNews else { return }
+        newsItems = fetchedNews.map { NewsItem(title: $0.title,
+                                               description: $0.description,
+                                               image: nil,
+                                               categoryType: $0.categoryType,
+                                               dateInfo: $0.publishedDate)
         }
     }
 }

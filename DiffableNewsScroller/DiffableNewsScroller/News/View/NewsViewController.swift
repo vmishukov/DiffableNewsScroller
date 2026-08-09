@@ -17,10 +17,11 @@ final class NewsViewController: UIViewController {
         collection.register(NewsCollectionCell.self,
                             forCellWithReuseIdentifier: NewsCollectionCell.reuseIdentifier)
         collection.translatesAutoresizingMaskIntoConstraints = false
-        collection.dataSource = self
         collection.delegate = self
         return collection
     }()
+    
+    private var dataSource: NewsCollectionDataSource?
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -28,6 +29,7 @@ final class NewsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupCollectionDataSource()
         setupView()
         setupConstraints()
         bindViewModel()
@@ -76,11 +78,11 @@ private extension NewsViewController {
         return layout
     }
     
-    private func bindViewModel() {
-        viewModel.$news
+    func bindViewModel() {
+        viewModel.$newsItems
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.newsCollectionView.reloadData()
+                self?.updateNewsCollection()
             }
             .store(in: &cancellables)
         
@@ -93,30 +95,26 @@ private extension NewsViewController {
             .store(in: &cancellables)
     }
     
-    private func showError(_ message: String) {
+    func setupCollectionDataSource() {
+        dataSource = NewsCollectionDataSource(collectionView: newsCollectionView,
+                                              cellProvider: { collectionView, indexPath, item in
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NewsCollectionCell.reuseIdentifier, for: indexPath)
+            guard let newsCell = cell as? NewsCollectionCell else { return cell }
+            newsCell.configureCell(with: item)
+            return newsCell
+        })
+        newsCollectionView.dataSource = dataSource
+    }
+    
+    func showError(_ message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Ok", style: .default))
         present(alert, animated: true)
     }
     
-}
-
-// MARK: - UICollectionViewDataSource
-extension NewsViewController: UICollectionViewDataSource {
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        viewModel.news.count
+    func updateNewsCollection() {
+        dataSource?.applySnapshot(items: viewModel.newsItems)
     }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NewsCollectionCell.reuseIdentifier, for: indexPath)
-        
-        guard let newsCell = cell as? NewsCollectionCell else {
-            return cell
-        }
-        return newsCell
-    }
-    
 }
 
 // MARK: - UICollectionViewDelegate

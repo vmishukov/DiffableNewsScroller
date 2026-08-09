@@ -65,6 +65,19 @@ final class NewsCollectionCell: UICollectionViewCell {
     }
 }
 
+// MARK: - Public Methods
+extension NewsCollectionCell {
+    
+    func configureCell(with item: NewsItem) {
+        titleLabel.text = item.title
+        descriptionLabel.text = item.description
+        categoryLabel.text = item.categoryType
+        imageView.image = item.image
+        dateInfoLabel.text = item.dateInfo
+    }
+    
+}
+
 // MARK: - Private Extension
 private extension NewsCollectionCell {
     
