@@ -58,7 +58,7 @@ private extension NewsViewController {
         let layout = UICollectionViewCompositionalLayout {
             (sectionIndex: Int, layoutEnvironment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
             let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                  heightDimension: .estimated(100))
+                                                  heightDimension: .estimated(50))
             let itemInsets = NSDirectionalEdgeInsets(top: 10,
                                                      leading: 10,
                                                      bottom: 10,
@@ -67,7 +67,7 @@ private extension NewsViewController {
             item.contentInsets = itemInsets
             
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                   heightDimension: .fractionalHeight(1.0))
+                                                   heightDimension: .estimated(50))
             
             let containerGroup = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
             

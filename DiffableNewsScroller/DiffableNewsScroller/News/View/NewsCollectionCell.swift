@@ -15,6 +15,7 @@ final class NewsCollectionCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "Title label"
+        label.numberOfLines = 0
         label.font = .systemFont(ofSize: 14, weight: .medium)
         return label
     }()
@@ -90,6 +91,8 @@ private extension NewsCollectionCell {
     }
     
     func setupConstraints() {
+        imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        imageView.setContentHuggingPriority(.defaultLow, for: .vertical)
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -108,11 +111,10 @@ private extension NewsCollectionCell {
             dateInfoLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             dateInfoLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
             
+            imageView.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: dateInfoLabel.bottomAnchor),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
             imageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3)
-            
         ])
     }
     
