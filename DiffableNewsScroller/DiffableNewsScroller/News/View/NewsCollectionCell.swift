@@ -23,7 +23,7 @@ final class NewsCollectionCell: UICollectionViewCell {
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "It’s important for SEOs and marketers to know that, with the recent update to Google News, Google has ended support for Editors’ Picks feeds and the standout meta tag."
+        label.text = "It's important for SEOs and marketers to know that, with the recent update to Google News, Google has ended support for Editors' Picks feeds and the standout meta tag."
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 12, weight: .regular)
         return label
@@ -51,13 +51,24 @@ final class NewsCollectionCell: UICollectionViewCell {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = UIImage(systemName: "photo")
         imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
         return imageView
     }()
+    
+    private var imageViewWidthConstraint: NSLayoutConstraint!
+    private var labelsToImageViewConstraint: NSLayoutConstraint!
+    private var labelsToContentViewConstraint: NSLayoutConstraint!
+    private var imageViewTrailingConstraint: NSLayoutConstraint!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupCell()
         setupConstraints()
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView.image = nil
     }
     
     @available(*, unavailable)
@@ -75,6 +86,20 @@ extension NewsCollectionCell {
         categoryLabel.text = item.categoryType
         imageView.image = item.image
         dateInfoLabel.text = item.dateInfo
+        
+        if item.imageIsNeeded {
+            imageView.isHidden = false
+            labelsToContentViewConstraint.isActive = false
+            imageViewWidthConstraint.isActive = true
+            imageViewTrailingConstraint.isActive = true
+            labelsToImageViewConstraint.isActive = true
+        } else {
+            imageView.isHidden = true
+            imageViewWidthConstraint.isActive = false
+            imageViewTrailingConstraint.isActive = false
+            labelsToImageViewConstraint.isActive = false
+            labelsToContentViewConstraint.isActive = true
+        }
     }
     
 }
@@ -93,29 +118,33 @@ private extension NewsCollectionCell {
     func setupConstraints() {
         imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         imageView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        
+        imageViewWidthConstraint = imageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3)
+        labelsToImageViewConstraint = titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -8)
+        labelsToContentViewConstraint = titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8)
+        imageViewTrailingConstraint = imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
             
-            categoryLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-            categoryLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            categoryLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            categoryLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            categoryLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
             
-            descriptionLabel.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor),
-            descriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            descriptionLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            descriptionLabel.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 4),
+            descriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
             
-            dateInfoLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor),
-            dateInfoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            dateInfoLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            dateInfoLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            dateInfoLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 4),
+            dateInfoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            dateInfoLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
             
             imageView.topAnchor.constraint(equalTo: titleLabel.topAnchor),
-            imageView.bottomAnchor.constraint(equalTo: dateInfoLabel.bottomAnchor),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3)
+            imageView.bottomAnchor.constraint(equalTo: dateInfoLabel.bottomAnchor)
         ])
+        
+        [categoryLabel, descriptionLabel, dateInfoLabel].forEach { label in
+            label.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor).isActive = true
+        }
     }
     
 }

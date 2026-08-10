@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct NewsResponseModel: Decodable {
+nonisolated struct NewsResponseModel: Decodable {
     
     let news: [NewsModel]
     let totalCount: Int

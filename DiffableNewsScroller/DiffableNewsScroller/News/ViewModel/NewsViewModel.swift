@@ -14,9 +14,10 @@ final class NewsViewModel {
     @Published private(set) var newsItems: [NewsItem] = []
     @Published private(set) var errorMessage: String? = nil
     
-    private var fetchedNews: [NewsModel]?
+    private var fetchedNews: [NewsModel] = []
     private let newsService: NewsServiceProtocol
     private let imageService: ImageServiceProtocol
+    private var currentNewsPage = 1
     
     init() {
         let service = NetworkNewsService()
@@ -26,50 +27,63 @@ final class NewsViewModel {
     }
 }
 
+// MARK: - Public Methods
+extension NewsViewModel {
+    
+    func didReachEndOfNews() {
+        fetchNews()
+    }
+    
+}
+
 // MARK: - Private Methods
 private extension NewsViewModel {
     
     func fetchNews() {
         Task {
             do {
-                fetchedNews = try await newsService.fetchNews(with: 1)
-                updateNewsItems()
+                let newlyFetchedNews = try await newsService.fetchNews(with: currentNewsPage)
+                currentNewsPage += 1
+                fetchedNews.append(contentsOf: newlyFetchedNews)
+                updateNewsItems(with: newlyFetchedNews)
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
     }
     
-    func updateNewsItems() {
-        guard let fetchedNews else { return }
-        newsItems = fetchedNews.map { NewsItem(newsId: $0.id,
-                                               title: $0.title ?? "",
-                                               description: $0.description ?? "",
-                                               image: nil,
-                                               categoryType: $0.categoryType ?? "",
-                                               dateInfo: $0.publishedDate ?? "")
+    func updateNewsItems(with fetchedNews: [NewsModel]) {
+        let newItems = fetchedNews.map { NewsItem(newsId: $0.id,
+                                                  title: $0.title ?? "",
+                                                  description: $0.description ?? "",
+                                                  image: nil,
+                                                  categoryType: $0.categoryType ?? "",
+                                                  dateInfo: $0.publishedDate ?? "")
         }
-        loadImagesIfNeeded()
+        newsItems.append(contentsOf: newItems)
+        loadImagesIfNeeded(with: newItems)
     }
     
-    func loadImagesIfNeeded() {
-        let noImagesNews = newsItems.compactMap { $0.image == nil ? $0.newsId : nil }
-        let newsToLoadImages = fetchedNews?.filter { noImagesNews.contains($0.id) }
-        guard let newsToLoadImages else { return }
+    func loadImagesIfNeeded(with newItems: [NewsItem]) {
+        let noImagesNews = newItems.compactMap { $0.image == nil && $0.imageIsNeeded ? $0.newsId : nil }
+        let newsToLoadImages = fetchedNews.filter { noImagesNews.contains($0.id) }
         newsToLoadImages.forEach {
-            guard let url = URL(string: $0.titleImageUrl ?? "") else { return }
             let newsId = $0.id
+            guard let itemIndex = newsItems.firstIndex(where: { $0.newsId == newsId }) else {
+                return
+            }
+            guard let url = URL(string: $0.titleImageUrl ?? "") else {
+                newsItems[itemIndex].imageIsNeeded = false
+                return
+            }
             Task {
                 do {
-                    guard let itemIndex = newsItems.firstIndex(where: {$0.newsId == newsId }) else {
-                        return
-                    }
                     let data = try await imageService.loadImage(from: url)
                     await MainActor.run {
                         newsItems[itemIndex].image = UIImage(data: data)
                     }
                 } catch {
-                    errorMessage = error.localizedDescription
+                    newsItems[itemIndex].imageIsNeeded = false
                 }
             }
         }
