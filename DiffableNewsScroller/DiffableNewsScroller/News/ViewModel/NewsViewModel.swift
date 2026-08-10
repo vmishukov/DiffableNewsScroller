@@ -13,16 +13,17 @@ final class NewsViewModel {
     
     @Published private(set) var newsItems: [NewsItem] = []
     @Published private(set) var errorMessage: String? = nil
+    @Published private(set) var selectedNewsUrl: URL? = nil
     
     private var fetchedNews: [NewsModel] = []
     private let newsService: NewsServiceProtocol
     private let imageService: ImageServiceProtocol
     private var currentNewsPage = 1
+    private var isLoading = false
     
-    init() {
-        let service = NetworkNewsService()
-        imageService = service
-        newsService = service
+    init(newsService: NewsServiceProtocol, imageService: ImageServiceProtocol) {
+        self.imageService = imageService
+        self.newsService = newsService
         fetchNews()
     }
 }
@@ -31,16 +32,23 @@ final class NewsViewModel {
 extension NewsViewModel {
     
     func didReachEndOfNews() {
+        guard !isLoading else { return }
         fetchNews()
     }
     
+    func didSelectNews(at index: Int) {
+        guard let selectedNewsUrlString = fetchedNews[safe: index]?.fullUrl else { return }
+        selectedNewsUrl = URL(string:selectedNewsUrlString)
+    }
 }
 
 // MARK: - Private Methods
 private extension NewsViewModel {
     
     func fetchNews() {
+        isLoading = true
         Task {
+            defer { isLoading = false }
             do {
                 let newlyFetchedNews = try await newsService.fetchNews(with: currentNewsPage)
                 currentNewsPage += 1
@@ -58,7 +66,7 @@ private extension NewsViewModel {
                                                   description: $0.description ?? "",
                                                   image: nil,
                                                   categoryType: $0.categoryType ?? "",
-                                                  dateInfo: $0.publishedDate ?? "")
+                                                  dateInfo: formatDateForItem($0.publishedDate ?? ""))
         }
         newsItems.append(contentsOf: newItems)
         loadImagesIfNeeded(with: newItems)
@@ -88,4 +96,35 @@ private extension NewsViewModel {
             }
         }
     }
+    
+    func formatDateForItem(_ dateString: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+        guard let date = dateFormatter.date(from: dateString) else {
+            return dateString
+        }
+
+        let calendar = Calendar.current
+
+        if calendar.isDateInToday(date) || calendar.isDateInYesterday(date) {
+            let relativeFormatter = RelativeDateTimeFormatter()
+            relativeFormatter.locale = Locale(identifier: "ru_RU")
+            relativeFormatter.dateTimeStyle = .numeric
+
+            return relativeFormatter.localizedString(
+                for: date,
+                relativeTo: Date()
+            ).capitalized
+        }
+
+        let absoluteFormatter = DateFormatter()
+        absoluteFormatter.locale = Locale(identifier: "ru_RU")
+        absoluteFormatter.dateFormat = "dd.MM.yyyy"
+
+        return absoluteFormatter.string(from: date)
+    }
+
 }

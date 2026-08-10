@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import SafariServices
 
 final class NewsViewController: UIViewController {
     
@@ -25,7 +26,17 @@ final class NewsViewController: UIViewController {
     
     private var cancellables = Set<AnyCancellable>()
     
-    private let viewModel = NewsViewModel()
+    private let viewModel: NewsViewModel
+    
+    init(viewModel: NewsViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -60,14 +71,14 @@ private extension NewsViewController {
             let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                   heightDimension: .estimated(50))
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
+            
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                    heightDimension: .estimated(50))
             
             let containerGroup = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
             
             let section = NSCollectionLayoutSection(group: containerGroup)
-            
+            section.interGroupSpacing = isIpad ? 36 : 16
             return section
         }
         return layout
@@ -86,6 +97,14 @@ private extension NewsViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] errorMessage in
                 self?.showError(errorMessage)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$selectedNewsUrl
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] url in
+                self?.openSelectedNews(url: url)
             }
             .store(in: &cancellables)
     }
@@ -107,6 +126,12 @@ private extension NewsViewController {
         present(alert, animated: true)
     }
     
+    func openSelectedNews(url: URL) {
+        let safariVC = SFSafariViewController(url: url)
+        safariVC.preferredControlTintColor = .systemBlue
+        present(safariVC, animated: true, completion: nil)
+    }
+    
     func updateNewsCollection() {
         dataSource?.applySnapshot(items: viewModel.newsItems)
     }
@@ -116,7 +141,7 @@ private extension NewsViewController {
 extension NewsViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+        viewModel.didSelectNews(at: indexPath.item)
     }
     
     func collectionView(_ collectionView: UICollectionView,
