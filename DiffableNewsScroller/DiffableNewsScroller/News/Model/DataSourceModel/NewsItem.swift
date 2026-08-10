@@ -11,6 +11,7 @@ import UIKit
 nonisolated struct NewsItem: Hashable {
     
     let identifier = UUID()
+    let newsId: Int
     var title: String
     var description: String
     var image: UIImage?
