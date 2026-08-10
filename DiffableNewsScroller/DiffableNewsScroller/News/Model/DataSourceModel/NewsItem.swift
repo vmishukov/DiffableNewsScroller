@@ -15,6 +15,7 @@ nonisolated struct NewsItem: Hashable {
     var title: String
     var description: String
     var image: UIImage?
+    var imageIsNeeded: Bool = true
     var categoryType: String
     var dateInfo: String
     

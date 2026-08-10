@@ -13,6 +13,6 @@ final class NewsCollectionDataSource: UICollectionViewDiffableDataSource<NewsSec
         var snapshot = NSDiffableDataSourceSnapshot<NewsSection, NewsItem>()
         snapshot.appendSections([.main])
         snapshot.appendItems(items)
-        apply(snapshot)
+        apply(snapshot, animatingDifferences: false)
     }
  }

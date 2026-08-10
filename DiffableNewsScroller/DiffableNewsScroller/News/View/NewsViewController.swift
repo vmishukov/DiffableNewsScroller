@@ -59,13 +59,8 @@ private extension NewsViewController {
             (sectionIndex: Int, layoutEnvironment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
             let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                   heightDimension: .estimated(50))
-            let itemInsets = NSDirectionalEdgeInsets(top: 10,
-                                                     leading: 10,
-                                                     bottom: 10,
-                                                     trailing: 10)
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
-            item.contentInsets = itemInsets
-            
+
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                    heightDimension: .estimated(50))
             
@@ -120,4 +115,15 @@ private extension NewsViewController {
 // MARK: - UICollectionViewDelegate
 extension NewsViewController: UICollectionViewDelegate {
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+    }
+    
+    func collectionView(_ collectionView: UICollectionView,
+                        willDisplay cell: UICollectionViewCell,
+                        forItemAt indexPath: IndexPath) {
+        if indexPath.row + 1 == viewModel.newsItems.count {
+            viewModel.didReachEndOfNews()
+        }
+    }
 }

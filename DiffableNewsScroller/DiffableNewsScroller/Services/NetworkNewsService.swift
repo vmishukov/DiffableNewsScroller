@@ -8,7 +8,7 @@
 import Foundation
 
 enum NetworkEndpoint: String {
-    case newsUrl = "https://webapi.autodoc.ru/api/news/"
+    case newsUrl = "https://webapi.autodoc.ru/api/news"
 }
 
 enum NetworkServiceError: Error {
@@ -16,15 +16,15 @@ enum NetworkServiceError: Error {
     case codeError(code: Int)
 }
 
-protocol NewsServiceProtocol {
+protocol NewsServiceProtocol: Actor {
     func fetchNews(with page: Int) async throws -> [NewsModel]
 }
 
-protocol ImageServiceProtocol {
+protocol ImageServiceProtocol: Actor {
     func loadImage(from url: URL) async throws -> Data
 }
 
-final class NetworkNewsService: NewsServiceProtocol {
+actor NetworkNewsService: NewsServiceProtocol {
     
     private let newsCountPerPage = 15
     private let decoder = JSONDecoder()
@@ -35,7 +35,20 @@ final class NetworkNewsService: NewsServiceProtocol {
         guard let url = URL(string: urlString) else {
             throw NetworkServiceError.invalidURL
         }
-        let data = try await load(from: url)
+        var fetchTask: Task<Data, Error>
+        if let existingTask = activeTasks[url] {
+            fetchTask = existingTask
+        } else {
+            fetchTask = Task {
+                defer {
+                    activeTasks[url] = nil
+                }
+                return try await load(from: url)
+            }
+            activeTasks[url] = fetchTask
+        }
+        
+        let data = try await fetchTask.value
         return try decoder.decode(NewsResponseModel.self, from: data).news
     }
 }
@@ -64,7 +77,8 @@ extension NetworkNewsService: ImageServiceProtocol {
 private extension NetworkNewsService {
     
     func load(from url: URL) async throws -> Data {
-        let request = URLRequest(url: url)
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
         let (data, response) = try await URLSession.shared.data(for: request)
         if let response = response as? HTTPURLResponse,
            response.statusCode < 200 || response.statusCode >= 300 {
